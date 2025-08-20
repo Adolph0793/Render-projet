@@ -10,11 +10,32 @@ const PORT = process.env.PORT || 3000;
 app.use(bodyParser.json());
 app.use(cors());
 
-// Connexion PostgreSQL via Render / Railway
+// Connexion PostgreSQL via Railway
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
+
+// Création automatique de la table "users" si elle n'existe pas
+const createUsersTable = async () => {
+    try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        `);
+        console.log("Table 'users' prête !");
+    } catch (err) {
+        console.error("Erreur lors de la création de la table 'users' :", err);
+    }
+};
+
+// Appeler la fonction au démarrage
+createUsersTable();
 
 // Endpoint d'inscription
 app.post('/api/signup', async (req, res) => {
